@@ -2,9 +2,14 @@ from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import sqlite3
 import os
+import logging
 
 app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app)
+
+# Logging setup
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Database setup
 DB_PATH = 'tartaros.db'
@@ -12,27 +17,38 @@ PORT = int(os.environ.get('PORT', 5000))
 
 def init_db():
     """Inisialisasi database"""
-    if not os.path.exists(DB_PATH):
+    try:
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
-        c.execute('''
-            CREATE TABLE items (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
-                price INTEGER NOT NULL,
-                pack INTEGER NOT NULL
-            )
-        ''')
-        # Insert default items
-        default_items = [
-            ('Mythical Chest', 1000, 800),
-            ('Clan Reroll', 1000, 1000),
-            ('Aura Crate', 250, 1),
-            ('Cosmetic Crate', 150, 1)
-        ]
-        c.executemany('INSERT INTO items (name, price, pack) VALUES (?, ?, ?)', default_items)
-        conn.commit()
+        
+        # Check if table exists
+        c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='items'")
+        table_exists = c.fetchone()
+        
+        if not table_exists:
+            c.execute('''
+                CREATE TABLE items (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL,
+                    price INTEGER NOT NULL,
+                    pack INTEGER NOT NULL
+                )
+            ''')
+            # Insert default items
+            default_items = [
+                ('Mythical Chest', 1000, 800),
+                ('Clan Reroll', 1000, 1000),
+                ('Aura Crate', 250, 1),
+                ('Cosmetic Crate', 150, 1)
+            ]
+            c.executemany('INSERT INTO items (name, price, pack) VALUES (?, ?, ?)', default_items)
+            conn.commit()
+            logger.info("Database initialized successfully")
+        
         conn.close()
+    except Exception as e:
+        logger.error(f"Database initialization error: {e}")
+        raise
 
 def get_db_connection():
     """Membuka koneksi database"""
@@ -45,10 +61,14 @@ def get_db_connection():
 # GET all items
 @app.route('/api/items', methods=['GET'])
 def get_items():
-    conn = get_db_connection()
-    items = conn.execute('SELECT * FROM items').fetchall()
-    conn.close()
-    return jsonify([dict(item) for item in items])
+    try:
+        conn = get_db_connection()
+        items = conn.execute('SELECT * FROM items').fetchall()
+        conn.close()
+        return jsonify([dict(item) for item in items])
+    except Exception as e:
+        logger.error(f"Error fetching items: {e}")
+        return jsonify({'error': 'Gagal memuat data dari database'}), 500
 
 # GET single item
 @app.route('/api/items/<int:id>', methods=['GET'])
@@ -123,5 +143,10 @@ def index():
     return send_from_directory('.', 'index.html')
 
 if __name__ == '__main__':
-    init_db()
-    app.run(debug=False, port=PORT, host='0.0.0.0')
+    try:
+        init_db()
+        logger.info(f"Starting server on port {PORT}")
+        app.run(debug=False, port=PORT, host='0.0.0.0')
+    except Exception as e:
+        logger.error(f"Failed to start server: {e}")
+        raise
