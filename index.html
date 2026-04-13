@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Struk Tartaros Store</title>
+
+    <style>
+      /* ============= GLOBAL =============  */
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: #1e1e2f;
+        color: white;
+        padding: 20px;
+      }
+
+      h1 {
+        text-align: center;
+        color: orange;
+        margin-bottom: 30px;
+      }
+
+      h3 {
+        margin-top: 0;
+      }
+
+      /* ============= TABLE =============  */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        background: #2a2a40;
+      }
+
+      th,
+      td {
+        border: 1px solid #444;
+        padding: 12px;
+        text-align: center;
+      }
+
+      th {
+        background: #1a1a2e;
+        color: #ffa500;
+        font-weight: bold;
+      }
+
+      /* ============= FORM INPUT =============  */
+      input {
+        padding: 8px;
+        border-radius: 5px;
+        border: none;
+        font-size: 14px;
+      }
+
+      /* ============= BUTTON =============  */
+      button {
+        padding: 10px 15px;
+        margin: 5px;
+        border-radius: 5px;
+        border: none;
+        cursor: pointer;
+        font-weight: bold;
+        transition: 0.3s;
+      }
+
+      .btn-add {
+        background: #27ae60;
+        color: white;
+      }
+
+      .btn-add:hover {
+        background: #229954;
+      }
+
+      .btn-delete {
+        background: #e74c3c;
+        color: white;
+        padding: 8px 12px;
+        font-size: 12px;
+      }
+
+      .btn-delete:hover {
+        background: #c0392b;
+      }
+
+      .btn-edit {
+        background: #3498db;
+        color: white;
+        padding: 8px 12px;
+        font-size: 12px;
+        margin-right: 5px;
+      }
+
+      .btn-edit:hover {
+        background: #2980b9;
+      }
+
+      .btn-print {
+        background: #f39c12;
+        color: black;
+      }
+
+      .btn-print:hover {
+        background: #e67e22;
+      }
+
+      /* ============= INFO =============  */
+      #total {
+        margin-top: 20px;
+        font-size: 22px;
+        text-align: right;
+        font-weight: bold;
+        color: #ffa500;
+      }
+
+      #warning {
+        color: #e74c3c;
+        text-align: right;
+        margin-top: 10px;
+        font-weight: bold;
+      }
+
+      /* ============= MODAL =============  */
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+
+      .modal-content {
+        background: #2a2a40;
+        padding: 30px;
+        border-radius: 10px;
+        width: 350px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      }
+
+      .modal-content h3 {
+        color: #ffa500;
+        margin-bottom: 20px;
+      }
+
+      .modal-content input {
+        width: 100%;
+        margin-bottom: 12px;
+        box-sizing: border-box;
+        padding: 10px;
+      }
+
+      .modal-content button {
+        width: 48%;
+        margin-top: 10px;
+      }
+
+      /* ============= PRINT STRUK =============  */
+      #struk-section {
+        display: none;
+      }
+
+      @media print {
+        body {
+          background: white;
+          color: black;
+          padding: 0;
+        }
+
+        h1,
+        .btn-add,
+        .btn-print,
+        table,
+        #total,
+        #warning,
+        .modal {
+          display: none;
+        }
+
+        #struk-section {
+          display: block;
+          page: auto;
+        }
+
+        .struk {
+          max-width: 400px;
+          margin: 0 auto;
+          padding: 0;
+          background: white;
+          color: black;
+          font-family: "Courier New", monospace;
+          font-size: 14px;
+        }
+
+        .struk-header {
+          text-align: center;
+          border-bottom: 2px dashed #000;
+          padding-bottom: 10px;
+          margin-bottom: 15px;
+        }
+
+        .struk-header h2 {
+          margin: 5px 0;
+          font-size: 18px;
+          font-weight: bold;
+        }
+
+        .struk-header p {
+          margin: 3px 0;
+          font-size: 12px;
+        }
+
+        .struk-items {
+          margin-bottom: 15px;
+        }
+
+        .struk-item {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 8px;
+          border-bottom: 1px solid #ddd;
+          padding-bottom: 5px;
+        }
+
+        .struk-item-name {
+          flex: 1;
+          text-align: left;
+        }
+
+        .struk-item-qty {
+          text-align: center;
+          width: 60px;
+          font-size: 12px;
+        }
+
+        .struk-item-price {
+          text-align: right;
+          width: 80px;
+        }
+
+        .struk-footer {
+          border-top: 2px dashed #000;
+          border-bottom: 2px dashed #000;
+          padding: 10px 0;
+          margin: 10px 0;
+          text-align: right;
+        }
+
+        .struk-total {
+          font-size: 16px;
+          font-weight: bold;
+          margin: 20px 0;
+          text-align: right;
+        }
+
+        .struk-timestamp {
+          text-align: center;
+          font-size: 11px;
+          color: #666;
+          margin-top: 15px;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>🧾 Tartaros Store - Struk</h1>
+
+    <button class="btn-add" onclick="openModal()">+ Tambah Item</button>
+    <button class="btn-print" onclick="printStruk()">🖨️ Print</button>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Nama</th>
+          <th>Harga Paket</th>
+          <th>Jumlah Paket</th>
+          <th>Total Item</th>
+          <th>Total Harga</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+
+    <div id="total">Total: Rp 0</div>
+    <div id="warning"></div>
+
+    <!-- STRUK SECTION (PRINT ONLY) -->
+    <div id="struk-section">
+      <div class="struk">
+        <div class="struk-header">
+          <h2>🧾 TARTAROS STORE</h2>
+          <p>=====================</p>
+          <p id="struk-date"></p>
+        </div>
+
+        <div class="struk-items" id="struk-items"></div>
+
+        <div class="struk-footer">
+          <div class="struk-total" id="struk-total">Rp 0</div>
+        </div>
+
+        <div class="struk-timestamp">
+          <p>Terima kasih! 🙏</p>
+          <p id="struk-time"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL TAMBAH -->
+    <div class="modal" id="modal">
+      <div class="modal-content">
+        <h3>Tambah Item</h3>
+
+        <input id="nama" placeholder="Nama Item" />
+        <input id="harga" type="number" placeholder="Harga Paket" />
+        <input id="pack" type="number" placeholder="Isi per Paket" />
+        <input id="qtyPack" type="number" placeholder="Jumlah Paket" />
+
+        <button onclick="saveItem()">Simpan</button>
+        <button onclick="closeModal()">Batal</button>
+      </div>
+    </div>
+
+    <!-- MODAL EDIT -->
+    <div class="modal" id="modal-edit">
+      <div class="modal-content">
+        <h3>Edit Item</h3>
+
+        <input id="edit-nama" placeholder="Nama Item" />
+        <input id="edit-harga" type="number" placeholder="Harga Paket" />
+        <input id="edit-pack" type="number" placeholder="Isi per Paket" />
+
+        <button onclick="updateItem()">Update</button>
+        <button onclick="closeEditModal()">Batal</button>
+      </div>
+    </div>
+
+    <script>
+      // ============= API URL CONFIG =============
+      const API_URL = window.location.origin + "/api";
+
+      // ============= DATA =============
+      let items = [];
+      let itemQty = {}; // untuk tracking jumlah paket setiap item
+
+      // ============= UTILITY FUNCTIONS =============
+      function formatRupiah(num) {
+        return num.toLocaleString("id-ID");
+      }
+
+      // ============= FETCH DATA =============
+      async function loadItems() {
+        try {
+          const response = await fetch(`${API_URL}/items`);
+          items = await response.json();
+
+          // Initialize qty for each item
+          items.forEach((item) => {
+            if (!itemQty[item.id]) {
+              itemQty[item.id] = 0;
+            }
+          });
+
+          render();
+        } catch (error) {
+          console.error("Error loading items:", error);
+          alert(
+            "Gagal memuat data dari server. Pastikan server berjalan di http://localhost:5000",
+          );
+        }
+      }
+
+      // ============= RENDER & UPDATE =============
+      function render() {
+        const tbody = document.getElementById("tbody");
+        tbody.innerHTML = "";
+        let grandTotal = 0;
+
+        items.forEach((item) => {
+          const qty = itemQty[item.id] || 0;
+          const totalItem = qty * item.pack;
+          const totalPrice = qty * item.price;
+          grandTotal += totalPrice;
+
+          tbody.innerHTML += `
+            <tr>
+              <td>${item.name}</td>
+              <td>Rp ${formatRupiah(item.price)} / ${item.pack}</td>
+              <td>
+                <input type="number" value="${qty}" min="0" onchange="updateQty(${item.id}, this.value)" />
+              </td>
+              <td>${totalItem}</td>
+              <td>Rp ${formatRupiah(totalPrice)}</td>
+              <td>
+                <button class="btn-edit" onclick="openEditModal(${item.id}, '${item.name}', ${item.price}, ${item.pack})">Ubah</button>
+                <button class="btn-delete" onclick="deleteItemFromDB(${item.id})">X</button>
+              </td>
+            </tr>
+          `;
+        });
+
+        document.getElementById("total").innerText =
+          "Total: Rp " + formatRupiah(grandTotal);
+        document.getElementById("warning").innerText =
+          grandTotal < 10000 ? "⚠ Minimal pembelian Rp 10.000" : "";
+      }
+
+      function updateQty(itemId, val) {
+        itemQty[itemId] = Math.max(0, parseInt(val) || 0);
+        render();
+      }
+
+      async function deleteItemFromDB(itemId) {
+        if (!confirm("Hapus item ini dari database?")) return;
+
+        try {
+          const response = await fetch(`${API_URL}/items/${itemId}`, {
+            method: "DELETE",
+          });
+
+          if (response.ok) {
+            loadItems();
+          } else {
+            alert("Gagal menghapus item");
+          }
+        } catch (error) {
+          console.error("Error deleting item:", error);
+          alert("Error menghapus item");
+        }
+      }
+
+      // ============= MODAL FUNCTIONS =============
+      function openModal() {
+        document.getElementById("modal").style.display = "flex";
+      }
+
+      function closeModal() {
+        document.getElementById("modal").style.display = "none";
+      }
+
+      let editingItemId = null;
+
+      function openEditModal(id, name, price, pack) {
+        editingItemId = id;
+        document.getElementById("edit-nama").value = name;
+        document.getElementById("edit-harga").value = price;
+        document.getElementById("edit-pack").value = pack;
+        document.getElementById("modal-edit").style.display = "flex";
+      }
+
+      function closeEditModal() {
+        document.getElementById("modal-edit").style.display = "none";
+        editingItemId = null;
+      }
+
+      // ============= SAVE & PRINT =============
+      async function saveItem() {
+        const name = document.getElementById("nama").value;
+        const price = parseInt(document.getElementById("harga").value);
+        const pack = parseInt(document.getElementById("pack").value);
+
+        if (!name || isNaN(price) || isNaN(pack) || price <= 0 || pack <= 0) {
+          alert(
+            "Isi semua data dengan benar! (Harga dan Isi per Paket harus > 0)",
+          );
+          return;
+        }
+
+        try {
+          const response = await fetch(`${API_URL}/items`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ name, price, pack }),
+          });
+
+          if (response.ok) {
+            closeModal();
+            loadItems();
+
+            // Reset form
+            document.getElementById("nama").value = "";
+            document.getElementById("harga").value = "";
+            document.getElementById("pack").value = "";
+            document.getElementById("qtyPack").value = "";
+          } else {
+            const error = await response.json();
+            alert(`Gagal menambah item: ${error.error || "Unknown error"}`);
+          }
+        } catch (error) {
+          console.error("Error saving item:", error);
+          alert(`Error menambah item: ${error.message}`);
+        }
+      }
+
+      async function updateItem() {
+        const name = document.getElementById("edit-nama").value;
+        const price = parseInt(document.getElementById("edit-harga").value);
+        const pack = parseInt(document.getElementById("edit-pack").value);
+
+        if (!name || isNaN(price) || isNaN(pack) || price <= 0 || pack <= 0) {
+          alert(
+            "Isi semua data dengan benar! (Harga dan Isi per Paket harus > 0)",
+          );
+          return;
+        }
+
+        try {
+          const response = await fetch(`${API_URL}/items/${editingItemId}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ name, price, pack }),
+          });
+
+          if (response.ok) {
+            closeEditModal();
+            loadItems();
+            alert("Item berhasil diupdate!");
+          } else {
+            const error = await response.json();
+            alert(`Gagal update item: ${error.error || "Unknown error"}`);
+          }
+        } catch (error) {
+          console.error("Error updating item:", error);
+          alert(`Error update item: ${error.message}`);
+        }
+      }
+
+      function printStruk() {
+        // Update struk data
+        let grandTotal = 0;
+        let strukHTML = "";
+
+        items.forEach((item) => {
+          const qty = itemQty[item.id] || 0;
+          if (qty > 0) {
+            // Hanya tampilkan item dengan qty > 0
+            const totalItem = qty * item.pack;
+            const totalPrice = qty * item.price;
+            grandTotal += totalPrice;
+
+            strukHTML += `
+              <div class="struk-item">
+                <span class="struk-item-name">${item.name}</span>
+                <span class="struk-item-qty">${qty}x Rp${formatRupiah(item.price)}</span>
+                <span class="struk-item-price">Rp${formatRupiah(totalPrice)}</span>
+              </div>
+            `;
+          }
+        });
+
+        // Update struk elements
+        document.getElementById("struk-items").innerHTML = strukHTML;
+        document.getElementById("struk-total").innerHTML =
+          `TOTAL: Rp ${formatRupiah(grandTotal)}`;
+
+        // Set date and time
+        const now = new Date();
+        const dateStr = now.toLocaleDateString("id-ID", {
+          weekday: "short",
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+        });
+        const timeStr = now.toLocaleTimeString("id-ID", {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+
+        document.getElementById("struk-date").innerHTML = dateStr;
+        document.getElementById("struk-time").innerHTML = timeStr;
+
+        // Print
+        window.print();
+      }
+
+      // ============= INITIALIZE =============
+      loadItems();
+    </script>
+  </body>
+</html>
