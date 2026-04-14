@@ -44,6 +44,8 @@ def init_db():
             c.executemany('INSERT INTO items (name, price, pack) VALUES (?, ?, ?)', default_items)
             conn.commit()
             logger.info("Database initialized successfully")
+        else:
+            logger.info("Database already exists")
         
         conn.close()
     except Exception as e:
@@ -142,10 +144,22 @@ def delete_item(id):
 def index():
     return send_from_directory('.', 'index.html')
 
+# Health check endpoint
+@app.route('/health', methods=['GET'])
+def health():
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.execute('SELECT 1')
+        conn.close()
+        return jsonify({'status': 'ok', 'database': 'connected'}), 200
+    except Exception as e:
+        return jsonify({'status': 'error', 'database': 'disconnected'}), 500
+
 if __name__ == '__main__':
     try:
         init_db()
         logger.info(f"Starting server on port {PORT}")
+        # Disable debug mode for production
         app.run(debug=False, port=PORT, host='0.0.0.0')
     except Exception as e:
         logger.error(f"Failed to start server: {e}")

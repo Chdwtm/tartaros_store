@@ -65,18 +65,70 @@ Buka file `index.html` di browser Anda (atau buka `http://localhost:5000`)
 | PUT    | `/api/items/<id>` | Update item      |
 | DELETE | `/api/items/<id>` | Delete item      |
 
+## Deployment (Production)
+
+### Deploy ke Render atau Platform Lain
+
+Aplikasi sudah siap untuk di-publish! Berikut langkahnya:
+
+#### 1. Persiapan Git
+
+```bash
+git init
+git add .
+git commit -m "Tartaros Store - Ready for production"
+```
+
+#### 2. Push ke GitHub
+
+```bash
+git remote add origin https://github.com/YOUR_USERNAME/tartaros-store.git
+git branch -M main
+git push -u origin main
+```
+
+#### 3. Deploy ke Render.com
+
+1. Buka https://render.com
+2. Sign up dengan GitHub account
+3. Klik "New" → "Web Service"
+4. Pilih repository `tartaros-store`
+5. Isi konfigurasi:
+   - **Name**: tartaros-store
+   - **Environment**: Python 3
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `gunicorn app:app`
+6. Klik "Create Web Service"
+
+Aplikasi akan live di URL yang diberikan Render (misal: `https://tartaros-store.onrender.com`)
+
+### Hosting Alternatif
+
+- **Heroku**, **Railway**, **Fly.io** - Support Python & Procfile
+- **Vercel + Python Runtime** - Butuh konfigurasi tambahan
+- **VPS/Server sendiri** - Gunakan `gunicorn` atau `uwsgi`
+
 ## Troubleshooting
 
 ### Error: "Gagal memuat data dari server"
 
-- Pastikan server Flask sudah jalan: `python app.py`
+- **Development**: Pastikan server Flask sudah jalan: `python app.py`
+- **Production**: Cek logs di platform deployment (Render, Heroku, dll)
 - Cek apakah port 5000 sudah terpakai
-- Jika error CORS, sudah di-handle dengan `flask-cors`
+- CORS sudah di-handle dengan `flask-cors` ✓
 
 ### Database Error
 
 - Hapus file `tartaros.db` jika rusak
-- Server akan membuat database baru otomatis
+- Server akan membuat database baru otomatis saat startup
+
+### Health Check
+
+Untuk test apakah server berjalan:
+
+```bash
+curl http://YOUR_DOMAIN/health
+```
 
 ## Default Items
 
