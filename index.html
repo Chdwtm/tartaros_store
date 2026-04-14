@@ -26,6 +26,17 @@
         font-size: 24px;
       }
 
+      .logo-header {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+
+      .logo {
+        max-width: 200px;
+        height: auto;
+        display: inline-block;
+      }
+
       h3 {
         margin-top: 0;
       }
@@ -355,6 +366,11 @@
         flex: 1;
       }
 
+      /* ============= STRUK SECTION (HIDDEN BY DEFAULT) =============  */
+      #struk-section {
+        display: none;
+      }
+
       /* ============= RESPONSIVE DESIGN =============  */
       /* Tablet */
       @media (max-width: 768px) {
@@ -487,6 +503,7 @@
         }
 
         h1,
+        .logo-header,
         .button-group,
         .btn-add,
         .btn-print,
@@ -518,14 +535,18 @@
   </head>
 
   <body>
-    <h1>🧾 Tartaros Store - Struk</h1>
+    <div class="logo-header">
+      <img src="gambar/logo.png" alt="Tartaros Store Logo" class="logo">
+    </div>
 
     <div id="error-notification"></div>
     <div id="loading">⏳ Memuat data...</div>
 
     <div class="button-group">
       <button class="btn-add" onclick="openModal()">+ Tambah Item</button>
-      <button class="btn-print" onclick="previewStruk()">🖨️ Preview & Print</button>
+      <button class="btn-print" onclick="previewStruk()">
+        🖨️ Preview & Print
+      </button>
     </div>
 
     <div class="table-container">
@@ -623,8 +644,12 @@
         </div>
 
         <div class="struk-preview-buttons">
-          <button class="btn-confirm" onclick="printFromModal()">🖨️ Cetak</button>
-          <button class="btn-cancel" onclick="closePreviewModal()">Tutup</button>
+          <button class="btn-confirm" onclick="printFromModal()">
+            🖨️ Cetak
+          </button>
+          <button class="btn-cancel" onclick="closePreviewModal()">
+            Tutup
+          </button>
         </div>
       </div>
     </div>
