@@ -303,34 +303,75 @@
         margin-bottom: 15px;
       }
 
-      .struk-preview-item {
+      .struk-preview-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 10px;
+      }
+
+      .struk-preview-table-header {
         display: flex;
         justify-content: space-between;
-        margin-bottom: 8px;
-        border-bottom: 1px solid #ddd;
+        border-bottom: 2px solid #000;
         padding-bottom: 5px;
+        margin-bottom: 8px;
+        font-weight: bold;
+        font-size: 11px;
         color: black;
       }
 
-      .struk-preview-item-name {
-        flex: 1;
+      .struk-preview-table-header-nama {
+        flex: 2;
         text-align: left;
-        margin-right: 10px;
+      }
+
+      .struk-preview-table-header-qty {
+        flex: 1;
+        text-align: center;
+      }
+
+      .struk-preview-table-header-total-item {
+        flex: 1;
+        text-align: center;
+      }
+
+      .struk-preview-table-header-price {
+        flex: 1.5;
+        text-align: right;
+      }
+
+      .struk-preview-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 6px;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 4px;
+        color: black;
+        font-size: 11px;
+      }
+
+      .struk-preview-item-name {
+        flex: 2;
+        text-align: left;
         word-break: break-word;
       }
 
       .struk-preview-item-qty {
+        flex: 1;
         text-align: center;
-        width: 50px;
         font-size: 11px;
-        flex-shrink: 0;
+      }
+
+      .struk-preview-item-total-item {
+        flex: 1;
+        text-align: center;
+        font-size: 11px;
       }
 
       .struk-preview-item-price {
+        flex: 1.5;
         text-align: right;
-        width: 70px;
         font-size: 11px;
-        flex-shrink: 0;
       }
 
       .struk-preview-footer {
@@ -339,6 +380,120 @@
         padding: 10px 0;
         margin: 10px 0;
         text-align: right;
+      }
+
+      /* ============= STRUK ITEM (PRINT) =============  */
+      .struk-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 6px;
+        border-bottom: 1px solid #000;
+        padding-bottom: 4px;
+        color: black;
+        font-size: 11px;
+      }
+
+      .struk-item-name {
+        flex: 2;
+        text-align: left;
+        word-break: break-word;
+      }
+
+      .struk-item-qty {
+        flex: 1;
+        text-align: center;
+        font-size: 11px;
+      }
+
+      .struk-item-total-item {
+        flex: 1;
+        text-align: center;
+        font-size: 11px;
+      }
+
+      .struk-item-price {
+        flex: 1.5;
+        text-align: right;
+        font-size: 11px;
+      }
+
+      /* ============= STRUK SECTION STYLES =============  */
+      .struk-header {
+        text-align: center;
+        border-bottom: 2px dashed #000;
+        padding-bottom: 10px;
+        margin-bottom: 15px;
+      }
+
+      .struk-header h2 {
+        margin: 5px 0;
+        font-size: 16px;
+        font-weight: bold;
+        color: black;
+      }
+
+      .struk-header p {
+        margin: 3px 0;
+        font-size: 11px;
+        color: #333;
+      }
+
+      .struk-items {
+        margin-bottom: 15px;
+      }
+
+      .struk-items-header {
+        display: flex;
+        justify-content: space-between;
+        border-bottom: 2px solid #000;
+        padding-bottom: 5px;
+        margin-bottom: 8px;
+        font-weight: bold;
+        font-size: 11px;
+        color: black;
+      }
+
+      .struk-items-header-nama {
+        flex: 2;
+        text-align: left;
+      }
+
+      .struk-items-header-qty {
+        flex: 1;
+        text-align: center;
+      }
+
+      .struk-items-header-total-item {
+        flex: 1;
+        text-align: center;
+      }
+
+      .struk-items-header-price {
+        flex: 1.5;
+        text-align: right;
+      }
+
+      .struk-footer {
+        border-top: 2px dashed #000;
+        border-bottom: 2px dashed #000;
+        padding: 10px 0;
+        margin: 10px 0;
+        text-align: right;
+      }
+
+      .struk-total {
+        font-size: 14px;
+        font-weight: bold;
+        margin: 15px 0;
+        text-align: right;
+        color: black;
+      }
+
+      .struk-timestamp {
+        text-align: center;
+        font-size: 10px;
+        color: #666;
+        margin-top: 15px;
       }
 
       .struk-preview-total {
@@ -493,6 +648,46 @@
         .struk-preview-item-name {
           margin-right: 5px;
         }
+
+        .struk-preview-table-header {
+          font-size: 10px;
+        }
+
+        .struk-preview-table-header-nama {
+          flex: 2;
+        }
+
+        .struk-preview-table-header-qty {
+          flex: 0.8;
+        }
+
+        .struk-preview-table-header-total-item {
+          flex: 0.8;
+        }
+
+        .struk-preview-table-header-price {
+          flex: 1.2;
+        }
+
+        .struk-preview-item {
+          font-size: 10px;
+        }
+
+        .struk-preview-item-name {
+          flex: 2;
+        }
+
+        .struk-preview-item-qty {
+          flex: 0.8;
+        }
+
+        .struk-preview-item-total-item {
+          flex: 0.8;
+        }
+
+        .struk-preview-item-price {
+          flex: 1.2;
+        }
       }
 
       @media print {
@@ -536,7 +731,7 @@
 
   <body>
     <div class="logo-header">
-      <img src="gambar/logo.png" alt="Tartaros Store Logo" class="logo">
+      <img src="gambar/logo.png" alt="Tartaros Store Logo" class="logo" />
     </div>
 
     <div id="error-notification"></div>
@@ -577,7 +772,15 @@
           <p id="struk-date"></p>
         </div>
 
-        <div class="struk-items" id="struk-items"></div>
+        <div class="struk-items">
+          <div class="struk-items-header">
+            <span class="struk-items-header-nama">Nama</span>
+            <span class="struk-items-header-qty">Jumlah Paket</span>
+            <span class="struk-items-header-total-item">Total Item</span>
+            <span class="struk-items-header-price">Total Harga</span>
+          </div>
+          <div id="struk-items"></div>
+        </div>
 
         <div class="struk-footer">
           <div class="struk-total" id="struk-total">Rp 0</div>
@@ -632,7 +835,17 @@
           <p id="preview-struk-date"></p>
         </div>
 
-        <div class="struk-preview-items" id="preview-struk-items"></div>
+        <div class="struk-preview-items">
+          <div class="struk-preview-table-header">
+            <span class="struk-preview-table-header-nama">Nama</span>
+            <span class="struk-preview-table-header-qty">Jumlah Paket</span>
+            <span class="struk-preview-table-header-total-item"
+              >Total Item</span
+            >
+            <span class="struk-preview-table-header-price">Total Harga</span>
+          </div>
+          <div id="preview-struk-items"></div>
+        </div>
 
         <div class="struk-preview-footer">
           <div class="struk-preview-total" id="preview-struk-total">Rp 0</div>
@@ -877,13 +1090,15 @@
           const qty = itemQty[item.id] || 0;
           if (qty > 0) {
             hasItems = true;
+            const totalItem = qty * item.pack;
             const totalPrice = qty * item.price;
             grandTotal += totalPrice;
 
             strukHTML += `
               <div class="struk-preview-item">
                 <span class="struk-preview-item-name">${item.name}</span>
-                <span class="struk-preview-item-qty">${qty}x</span>
+                <span class="struk-preview-item-qty">${qty}</span>
+                <span class="struk-preview-item-total-item">${totalItem}</span>
                 <span class="struk-preview-item-price">Rp${formatRupiah(totalPrice)}</span>
               </div>
             `;
@@ -928,13 +1143,15 @@
         items.forEach((item) => {
           const qty = itemQty[item.id] || 0;
           if (qty > 0) {
+            const totalItem = qty * item.pack;
             const totalPrice = qty * item.price;
             grandTotal += totalPrice;
 
             strukHTML += `
               <div class="struk-item">
                 <span class="struk-item-name">${item.name}</span>
-                <span class="struk-item-qty">${qty}x Rp${formatRupiah(item.price)}</span>
+                <span class="struk-item-qty">${qty} x ${item.pack}</span>
+                <span class="struk-item-total-item">${totalItem}</span>
                 <span class="struk-item-price">Rp${formatRupiah(totalPrice)}</span>
               </div>
             `;
