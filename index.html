@@ -83,6 +83,82 @@
         padding: 6px;
       }
 
+      .quantity-selector {
+        display: flex;
+        gap: 0;
+        align-items: center;
+        border: 2px solid #444;
+        border-radius: 5px;
+        background: #1a1a2e;
+        overflow: hidden;
+      }
+
+      .quantity-mode-buttons {
+        display: flex;
+        gap: 0;
+        flex-shrink: 0;
+      }
+
+      .input-mode-toggle {
+        background: #1a1a2e;
+        color: #888;
+        padding: 8px 12px;
+        border: none;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        flex: 1;
+        border-right: 1px solid #444;
+        min-width: 50px;
+      }
+
+      .input-mode-toggle:last-child {
+        border-right: none;
+      }
+
+      .input-mode-toggle:hover {
+        background: #2a2a40;
+        color: #aaa;
+      }
+
+      .input-mode-toggle.active {
+        background: #f39c12;
+        color: black;
+        border-right: 1px solid #e67e22;
+      }
+
+      .input-mode-toggle.active:last-child {
+        border-right: none;
+      }
+
+      .input-container {
+        display: flex;
+        gap: 0;
+        align-items: center;
+        flex: 1;
+      }
+
+      .input-container input[type="number"] {
+        width: 100%;
+        padding: 8px 12px;
+        border: none;
+        background: transparent;
+        color: white;
+        font-size: 14px;
+        font-weight: 500;
+        border-radius: 0;
+      }
+
+      .input-container input[type="number"]:focus {
+        outline: none;
+        background: rgba(243, 156, 18, 0.1);
+      }
+
+      .input-container input[type="number"]::placeholder {
+        color: #666;
+      }
+
       /* ============= FORM INPUT =============  */
       input {
         padding: 8px;
@@ -614,6 +690,36 @@
           font-size: 11px;
         }
 
+        .quantity-selector {
+          flex-direction: column;
+        }
+
+        .quantity-mode-buttons {
+          width: 100%;
+          border-bottom: 1px solid #444;
+          border-right: none;
+        }
+
+        .input-mode-toggle {
+          padding: 8px 10px;
+          font-size: 11px;
+          border-right: 1px solid #444 !important;
+          flex: 1;
+        }
+
+        .input-mode-toggle:last-child {
+          border-right: none !important;
+        }
+
+        .input-container {
+          flex-direction: row;
+        }
+
+        .input-container input[type="number"] {
+          padding: 8px 10px;
+          font-size: 12px;
+        }
+
         #total,
         #warning {
           font-size: 12px;
@@ -750,7 +856,7 @@
           <tr>
             <th>Nama</th>
             <th>Harga Paket</th>
-            <th>Jumlah Paket</th>
+            <th>Jumlah (Pilih Mode)</th>
             <th>Total Item</th>
             <th>Total Harga</th>
             <th>Aksi</th>
@@ -874,6 +980,7 @@
       // ============= DATA =============
       let items = [];
       let itemQty = {};
+      let itemInputMode = {}; // 'package' atau 'rupiah'
 
       // ============= UTILITY FUNCTIONS =============
       function formatRupiah(num) {
@@ -897,6 +1004,9 @@
           items.forEach((item) => {
             if (!itemQty[item.id]) {
               itemQty[item.id] = 0;
+            }
+            if (!itemInputMode[item.id]) {
+              itemInputMode[item.id] = "package"; // default mode
             }
           });
 
@@ -928,16 +1038,48 @@
 
         items.forEach((item) => {
           const qty = itemQty[item.id] || 0;
+          const mode = itemInputMode[item.id] || "package";
           const totalItem = qty * item.pack;
           const totalPrice = qty * item.price;
           grandTotal += totalPrice;
+
+          // Calculate rupiah value
+          const rupiah = qty * item.price;
+
+          // Determine which input to show
+          let inputHTML = "";
+          if (mode === "package") {
+            inputHTML = `
+              <div class="quantity-selector">
+                <div class="quantity-mode-buttons">
+                  <button class="input-mode-toggle active" onclick="toggleInputMode(${item.id}, 'package')" title="Input jumlah paket">Paket</button>
+                  <button class="input-mode-toggle" onclick="toggleInputMode(${item.id}, 'rupiah')" title="Input rupiah">Rp</button>
+                </div>
+                <div class="input-container">
+                  <input type="number" value="${qty}" min="0" onchange="updateQtyByPackage(${item.id}, this.value)" />
+                </div>
+              </div>
+            `;
+          } else {
+            inputHTML = `
+              <div class="quantity-selector">
+                <div class="quantity-mode-buttons">
+                  <button class="input-mode-toggle" onclick="toggleInputMode(${item.id}, 'package')" title="Input jumlah paket">Paket</button>
+                  <button class="input-mode-toggle active" onclick="toggleInputMode(${item.id}, 'rupiah')" title="Input rupiah">Rp</button>
+                </div>
+                <div class="input-container">
+                  <input type="number" value="${rupiah}" min="0" onchange="updateQtyByRupiah(${item.id}, this.value, ${item.price})" placeholder="0" />
+                </div>
+              </div>
+            `;
+          }
 
           tbody.innerHTML += `
             <tr>
               <td>${item.name}</td>
               <td>Rp ${formatRupiah(item.price)} / ${item.pack}</td>
               <td>
-                <input type="number" value="${qty}" min="0" onchange="updateQty(${item.id}, this.value)" />
+                ${inputHTML}
               </td>
               <td>${totalItem}</td>
               <td>Rp ${formatRupiah(totalPrice)}</td>
@@ -955,8 +1097,20 @@
           grandTotal < 10000 ? "⚠ Minimal pembelian Rp 10.000" : "";
       }
 
-      function updateQty(itemId, val) {
+      function updateQtyByPackage(itemId, val) {
         itemQty[itemId] = Math.max(0, parseInt(val) || 0);
+        render();
+      }
+
+      function updateQtyByRupiah(itemId, val, pricePerPack) {
+        const inputRupiah = Math.max(0, parseInt(val) || 0);
+        // Calculate package quantity from rupiah input
+        itemQty[itemId] = Math.floor(inputRupiah / pricePerPack);
+        render();
+      }
+
+      function toggleInputMode(itemId, newMode) {
+        itemInputMode[itemId] = newMode;
         render();
       }
 
