@@ -86,19 +86,39 @@ def get_item(id):
 # CREATE new item
 @app.route('/api/items', methods=['POST'])
 def create_item():
-    data = request.get_json()
-    
-    if not all(k in data for k in ['name', 'price', 'pack']):
-        return jsonify({'error': 'Data tidak lengkap'}), 400
-    
-    conn = get_db_connection()
-    conn.execute('INSERT INTO items (name, price, pack) VALUES (?, ?, ?)',
-                 (data['name'], data['price'], data['pack']))
-    conn.commit()
-    item_id = conn.lastrowid
-    conn.close()
-    
-    return jsonify({'id': item_id, **data}), 201
+    try:
+        data = request.get_json()
+        
+        if not all(k in data for k in ['name', 'price', 'pack']):
+            return jsonify({'error': 'Data tidak lengkap'}), 400
+        
+        # Validasi dan konversi data
+        name = str(data['name']).strip()
+        try:
+            price = int(data['price'])
+            pack = int(data['pack'])
+        except (ValueError, TypeError):
+            return jsonify({'error': 'Harga dan pack harus berupa angka'}), 400
+        
+        if not name:
+            return jsonify({'error': 'Nama item tidak boleh kosong'}), 400
+        
+        if price <= 0 or pack <= 0:
+            return jsonify({'error': 'Harga dan pack harus lebih besar dari 0'}), 400
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute('INSERT INTO items (name, price, pack) VALUES (?, ?, ?)',
+                     (name, price, pack))
+        conn.commit()
+        item_id = cursor.lastrowid
+        conn.close()
+        
+        logger.info(f"Item created successfully with ID: {item_id}, name: {name}, price: {price}, pack: {pack}")
+        return jsonify({'id': item_id, 'name': name, 'price': price, 'pack': pack}), 201
+    except Exception as e:
+        logger.error(f"Error creating item: {e}", exc_info=True)
+        return jsonify({'error': f'Gagal menambahkan item: {str(e)}'}), 500
 
 # UPDATE item
 @app.route('/api/items/<int:id>', methods=['PUT'])

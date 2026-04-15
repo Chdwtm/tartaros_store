@@ -1135,11 +1135,21 @@
 
       // ============= MODAL FUNCTIONS =============
       function openModal() {
+        // Clear form fields when opening modal
+        document.getElementById("nama").value = "";
+        document.getElementById("harga").value = "";
+        document.getElementById("pack").value = "";
+        document.getElementById("qtyPack").value = "";
         document.getElementById("modal").style.display = "flex";
       }
 
       function closeModal() {
         document.getElementById("modal").style.display = "none";
+        // Clear form fields when closing
+        document.getElementById("nama").value = "";
+        document.getElementById("harga").value = "";
+        document.getElementById("pack").value = "";
+        document.getElementById("qtyPack").value = "";
       }
 
       let editingItemId = null;
@@ -1159,18 +1169,63 @@
 
       // ============= SAVE & UPDATE =============
       async function saveItem() {
-        const name = document.getElementById("nama").value;
-        const price = parseInt(document.getElementById("harga").value);
-        const pack = parseInt(document.getElementById("pack").value);
+        const nameInput = document.getElementById("nama");
+        const hargaInput = document.getElementById("harga");
+        const packInput = document.getElementById("pack");
 
-        if (!name || isNaN(price) || isNaN(pack) || price <= 0 || pack <= 0) {
-          showErrorNotification(
-            "⚠️ Isi semua data dengan benar! (Harga dan Isi per Paket harus > 0)",
-          );
+        const name = nameInput.value.trim();
+        const priceStr = hargaInput.value.trim();
+        const packStr = packInput.value.trim();
+
+        // Validation
+        if (!name) {
+          showErrorNotification("⚠️ Nama item tidak boleh kosong!");
+          nameInput.focus();
+          return;
+        }
+
+        if (!priceStr) {
+          showErrorNotification("⚠️ Harga paket tidak boleh kosong!");
+          hargaInput.focus();
+          return;
+        }
+
+        if (!packStr) {
+          showErrorNotification("⚠️ Isi per paket tidak boleh kosong!");
+          packInput.focus();
+          return;
+        }
+
+        const price = parseInt(priceStr);
+        const pack = parseInt(packStr);
+
+        if (isNaN(price)) {
+          showErrorNotification("⚠️ Harga harus berupa angka!");
+          hargaInput.focus();
+          return;
+        }
+
+        if (isNaN(pack)) {
+          showErrorNotification("⚠️ Isi per paket harus berupa angka!");
+          packInput.focus();
+          return;
+        }
+
+        if (price <= 0) {
+          showErrorNotification("⚠️ Harga harus lebih besar dari 0!");
+          hargaInput.focus();
+          return;
+        }
+
+        if (pack <= 0) {
+          showErrorNotification("⚠️ Isi per paket harus lebih besar dari 0!");
+          packInput.focus();
           return;
         }
 
         try {
+          console.log("Sending data to API:", { name, price, pack });
+
           const response = await fetch(`${API_URL}/items`, {
             method: "POST",
             headers: {
@@ -1179,22 +1234,39 @@
             body: JSON.stringify({ name, price, pack }),
           });
 
-          if (response.ok) {
-            closeModal();
-            loadItems();
-            document.getElementById("nama").value = "";
-            document.getElementById("harga").value = "";
-            document.getElementById("pack").value = "";
-            document.getElementById("qtyPack").value = "";
+          console.log("Response status:", response.status);
+          console.log("Response headers:", response.headers);
+
+          let responseData;
+          const contentType = response.headers.get("content-type");
+
+          if (contentType && contentType.includes("application/json")) {
+            responseData = await response.json();
           } else {
-            const error = await response.json();
-            showErrorNotification(
-              `❌ Gagal menambah item: ${error.error || "Kesalahan tidak diketahui"}`,
-            );
+            const text = await response.text();
+            console.error("Non-JSON response:", text);
+            responseData = { error: "Server returned non-JSON response" };
+          }
+
+          console.log("Response data:", responseData);
+
+          if (response.ok) {
+            showErrorNotification("✅ Item berhasil ditambahkan!");
+            setTimeout(() => {
+              closeModal();
+              loadItems();
+              showErrorNotification("");
+            }, 500);
+          } else {
+            const errorMsg = responseData.error || "Kesalahan tidak diketahui";
+            console.error("API Error:", errorMsg);
+            showErrorNotification(`❌ Gagal menambah item: ${errorMsg}`);
           }
         } catch (error) {
           console.error("Error saving item:", error);
-          showErrorNotification(`❌ Terjadi kesalahan saat menambah item`);
+          showErrorNotification(
+            `❌ Terjadi kesalahan: ${error.message || "Tidak dapat terhubung ke server"}`,
+          );
         }
       }
 
