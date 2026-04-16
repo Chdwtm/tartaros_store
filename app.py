@@ -20,9 +20,18 @@ if not DATABASE_URL:
 
 PORT = int(os.environ.get('PORT', 5000))
 
+# Track if database is initialized
+db_initialized = False
+
 def init_db():
     """Inisialisasi database PostgreSQL"""
+    global db_initialized
+    
+    if db_initialized:
+        return
+    
     try:
+        logger.info(f"Attempting to connect to database: {DATABASE_URL[:50]}...")
         conn = psycopg2.connect(DATABASE_URL)
         cursor = conn.cursor()
         
@@ -34,8 +43,10 @@ def init_db():
             )
         """)
         table_exists = cursor.fetchone()[0]
+        logger.info(f"Table 'items' exists: {table_exists}")
         
         if not table_exists:
+            logger.info("Creating items table...")
             cursor.execute('''
                 CREATE TABLE items (
                     id SERIAL PRIMARY KEY,
@@ -45,6 +56,7 @@ def init_db():
                 )
             ''')
             # Insert default items
+            logger.info("Inserting default items...")
             default_items = [
                 ('Mythical Chest', 1000, 800),
                 ('Clan Reroll', 1000, 1000),
@@ -58,20 +70,34 @@ def init_db():
                 default_items
             )
             conn.commit()
-            logger.info("Database initialized successfully")
+            logger.info("Database initialized successfully with default items")
         else:
-            logger.info("Database already exists")
+            logger.info("Table already exists, skipping initialization")
         
         cursor.close()
         conn.close()
+        db_initialized = True
+        logger.info("✅ Database initialization complete")
     except Exception as e:
-        logger.error(f"Database initialization error: {e}")
+        logger.error(f"❌ Database initialization error: {e}", exc_info=True)
+        db_initialized = False
         raise
 
 def get_db_connection():
     """Membuka koneksi database PostgreSQL"""
     conn = psycopg2.connect(DATABASE_URL)
     return conn
+
+# Initialize database on first app startup
+@app.before_request
+def startup():
+    """Initialize database before first request"""
+    global db_initialized
+    if not db_initialized:
+        try:
+            init_db()
+        except Exception as e:
+            logger.error(f"Failed to initialize database on startup: {e}")
 
 # ============= API ENDPOINTS =============
 
@@ -233,6 +259,17 @@ def delete_item(id):
 def index():
     return send_from_directory('.', 'index.html')
 
+# Database initialization endpoint (for manual trigger if needed)
+@app.route('/api/init', methods=['POST'])
+def api_init():
+    """Manual database initialization endpoint"""
+    try:
+        init_db()
+        return jsonify({'status': 'ok', 'message': 'Database initialized'}), 200
+    except Exception as e:
+        logger.error(f"Init endpoint error: {e}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
 # Health check endpoint
 @app.route('/health', methods=['GET'])
 def health():
@@ -242,13 +279,14 @@ def health():
         cursor.execute('SELECT 1')
         cursor.close()
         conn.close()
-        return jsonify({'status': 'ok', 'database': 'connected'}), 200
+        return jsonify({'status': 'ok', 'database': 'connected', 'initialized': db_initialized}), 200
     except Exception as e:
         logger.error(f"Health check failed: {e}")
-        return jsonify({'status': 'error', 'database': 'disconnected'}), 500
+        return jsonify({'status': 'error', 'database': 'disconnected', 'initialized': db_initialized}), 500
 
 if __name__ == '__main__':
     try:
+        logger.info("Starting Tartaros Store Server...")
         init_db()
         logger.info(f"Starting server on port {PORT}")
         # Disable debug mode for production
