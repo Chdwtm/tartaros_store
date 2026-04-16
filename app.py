@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
-import sqlite3
+import psycopg2
+from psycopg2.extras import RealDictCursor
 import os
 import logging
 
@@ -11,24 +12,33 @@ CORS(app)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Database setup
-DB_PATH = 'tartaros.db'
+# Database setup - Vercel Postgres
+DATABASE_URL = os.environ.get('POSTGRES_URL_NON_POOLING')
+if not DATABASE_URL:
+    # Fallback untuk development
+    DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://user:password@localhost/tartaros')
+
 PORT = int(os.environ.get('PORT', 5000))
 
 def init_db():
-    """Inisialisasi database"""
+    """Inisialisasi database PostgreSQL"""
     try:
-        conn = sqlite3.connect(DB_PATH)
-        c = conn.cursor()
+        conn = psycopg2.connect(DATABASE_URL)
+        cursor = conn.cursor()
         
         # Check if table exists
-        c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='items'")
-        table_exists = c.fetchone()
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT 1 FROM information_schema.tables 
+                WHERE table_name = 'items'
+            )
+        """)
+        table_exists = cursor.fetchone()[0]
         
         if not table_exists:
-            c.execute('''
+            cursor.execute('''
                 CREATE TABLE items (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    id SERIAL PRIMARY KEY,
                     name TEXT NOT NULL,
                     price INTEGER NOT NULL,
                     pack INTEGER NOT NULL
@@ -39,23 +49,28 @@ def init_db():
                 ('Mythical Chest', 1000, 800),
                 ('Clan Reroll', 1000, 1000),
                 ('Aura Crate', 250, 1),
-                ('Cosmetic Crate', 150, 1)
+                ('Cosmetic Crate', 150, 1),
+                ('Passive Shard', 1000, 1000),
+                ('Power Shard', 1000, 2000)
             ]
-            c.executemany('INSERT INTO items (name, price, pack) VALUES (?, ?, ?)', default_items)
+            cursor.executemany(
+                'INSERT INTO items (name, price, pack) VALUES (%s, %s, %s)',
+                default_items
+            )
             conn.commit()
             logger.info("Database initialized successfully")
         else:
             logger.info("Database already exists")
         
+        cursor.close()
         conn.close()
     except Exception as e:
         logger.error(f"Database initialization error: {e}")
         raise
 
 def get_db_connection():
-    """Membuka koneksi database"""
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    """Membuka koneksi database PostgreSQL"""
+    conn = psycopg2.connect(DATABASE_URL)
     return conn
 
 # ============= API ENDPOINTS =============
@@ -65,7 +80,10 @@ def get_db_connection():
 def get_items():
     try:
         conn = get_db_connection()
-        items = conn.execute('SELECT * FROM items').fetchall()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute('SELECT * FROM items ORDER BY id')
+        items = cursor.fetchall()
+        cursor.close()
         conn.close()
         return jsonify([dict(item) for item in items])
     except Exception as e:
@@ -75,13 +93,20 @@ def get_items():
 # GET single item
 @app.route('/api/items/<int:id>', methods=['GET'])
 def get_item(id):
-    conn = get_db_connection()
-    item = conn.execute('SELECT * FROM items WHERE id = ?', (id,)).fetchone()
-    conn.close()
-    
-    if item is None:
-        return jsonify({'error': 'Item tidak ditemukan'}), 404
-    return jsonify(dict(item))
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute('SELECT * FROM items WHERE id = %s', (id,))
+        item = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if item is None:
+            return jsonify({'error': 'Item tidak ditemukan'}), 404
+        return jsonify(dict(item))
+    except Exception as e:
+        logger.error(f"Error fetching item: {e}")
+        return jsonify({'error': 'Gagal memuat item'}), 500
 
 # CREATE new item
 @app.route('/api/items', methods=['POST'])
@@ -108,10 +133,15 @@ def create_item():
         
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute('INSERT INTO items (name, price, pack) VALUES (?, ?, ?)',
+        cursor.execute('INSERT INTO items (name, price, pack) VALUES (%s, %s, %s)',
                      (name, price, pack))
         conn.commit()
-        item_id = cursor.lastrowid
+        
+        # Get the last inserted ID
+        cursor.execute('SELECT LASTVAL()')
+        item_id = cursor.fetchone()[0]
+        
+        cursor.close()
         conn.close()
         
         logger.info(f"Item created successfully with ID: {item_id}, name: {name}, price: {price}, pack: {pack}")
@@ -127,9 +157,12 @@ def update_item(id):
         data = request.get_json()
         
         conn = get_db_connection()
-        item = conn.execute('SELECT * FROM items WHERE id = ?', (id,)).fetchone()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute('SELECT * FROM items WHERE id = %s', (id,))
+        item = cursor.fetchone()
         
         if item is None:
+            cursor.close()
             conn.close()
             return jsonify({'error': 'Item tidak ditemukan'}), 404
         
@@ -144,20 +177,24 @@ def update_item(id):
             price = int(price)
             pack = int(pack)
         except (ValueError, TypeError):
+            cursor.close()
             conn.close()
             return jsonify({'error': 'Harga dan pack harus berupa angka'}), 400
         
         if not name:
+            cursor.close()
             conn.close()
             return jsonify({'error': 'Nama item tidak boleh kosong'}), 400
         
         if price <= 0 or pack <= 0:
+            cursor.close()
             conn.close()
             return jsonify({'error': 'Harga dan pack harus lebih besar dari 0'}), 400
         
-        conn.execute('UPDATE items SET name = ?, price = ?, pack = ? WHERE id = ?',
+        cursor.execute('UPDATE items SET name = %s, price = %s, pack = %s WHERE id = %s',
                      (name, price, pack, id))
         conn.commit()
+        cursor.close()
         conn.close()
         
         logger.info(f"Item updated successfully: id={id}, name={name}, price={price}, pack={pack}")
@@ -169,18 +206,27 @@ def update_item(id):
 # DELETE item
 @app.route('/api/items/<int:id>', methods=['DELETE'])
 def delete_item(id):
-    conn = get_db_connection()
-    item = conn.execute('SELECT * FROM items WHERE id = ?', (id,)).fetchone()
-    
-    if item is None:
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute('SELECT * FROM items WHERE id = %s', (id,))
+        item = cursor.fetchone()
+        
+        if item is None:
+            cursor.close()
+            conn.close()
+            return jsonify({'error': 'Item tidak ditemukan'}), 404
+        
+        cursor.execute('DELETE FROM items WHERE id = %s', (id,))
+        conn.commit()
+        cursor.close()
         conn.close()
-        return jsonify({'error': 'Item tidak ditemukan'}), 404
-    
-    conn.execute('DELETE FROM items WHERE id = ?', (id,))
-    conn.commit()
-    conn.close()
-    
-    return jsonify({'message': 'Item berhasil dihapus'}), 200
+        
+        logger.info(f"Item deleted successfully: id={id}")
+        return jsonify({'message': 'Item berhasil dihapus'}), 200
+    except Exception as e:
+        logger.error(f"Error deleting item: {e}")
+        return jsonify({'error': 'Gagal menghapus item'}), 500
 
 # ============= SERVE STATIC FILES =============
 @app.route('/')
@@ -191,11 +237,14 @@ def index():
 @app.route('/health', methods=['GET'])
 def health():
     try:
-        conn = sqlite3.connect(DB_PATH)
-        conn.execute('SELECT 1')
+        conn = psycopg2.connect(DATABASE_URL)
+        cursor = conn.cursor()
+        cursor.execute('SELECT 1')
+        cursor.close()
         conn.close()
         return jsonify({'status': 'ok', 'database': 'connected'}), 200
     except Exception as e:
+        logger.error(f"Health check failed: {e}")
         return jsonify({'status': 'error', 'database': 'disconnected'}), 500
 
 if __name__ == '__main__':
