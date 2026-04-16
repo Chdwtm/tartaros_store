@@ -906,8 +906,12 @@
           });
 
           if (response.ok) {
-            closeEditModal();
-            loadItems();
+            showErrorNotification("✅ Item berhasil diupdate!");
+            setTimeout(() => {
+              closeEditModal();
+              loadItems();
+              showErrorNotification("");
+            }, 500);
           } else {
             const error = await response.json();
             showErrorNotification(

@@ -123,25 +123,48 @@ def create_item():
 # UPDATE item
 @app.route('/api/items/<int:id>', methods=['PUT'])
 def update_item(id):
-    data = request.get_json()
-    
-    conn = get_db_connection()
-    item = conn.execute('SELECT * FROM items WHERE id = ?', (id,)).fetchone()
-    
-    if item is None:
+    try:
+        data = request.get_json()
+        
+        conn = get_db_connection()
+        item = conn.execute('SELECT * FROM items WHERE id = ?', (id,)).fetchone()
+        
+        if item is None:
+            conn.close()
+            return jsonify({'error': 'Item tidak ditemukan'}), 404
+        
+        # Get values from request, with fallback to existing values
+        name = data.get('name', item['name'])
+        price = data.get('price', item['price'])
+        pack = data.get('pack', item['pack'])
+        
+        # Validasi dan konversi data
+        name = str(name).strip()
+        try:
+            price = int(price)
+            pack = int(pack)
+        except (ValueError, TypeError):
+            conn.close()
+            return jsonify({'error': 'Harga dan pack harus berupa angka'}), 400
+        
+        if not name:
+            conn.close()
+            return jsonify({'error': 'Nama item tidak boleh kosong'}), 400
+        
+        if price <= 0 or pack <= 0:
+            conn.close()
+            return jsonify({'error': 'Harga dan pack harus lebih besar dari 0'}), 400
+        
+        conn.execute('UPDATE items SET name = ?, price = ?, pack = ? WHERE id = ?',
+                     (name, price, pack, id))
+        conn.commit()
         conn.close()
-        return jsonify({'error': 'Item tidak ditemukan'}), 404
-    
-    name = data.get('name', item['name'])
-    price = data.get('price', item['price'])
-    pack = data.get('pack', item['pack'])
-    
-    conn.execute('UPDATE items SET name = ?, price = ?, pack = ? WHERE id = ?',
-                 (name, price, pack, id))
-    conn.commit()
-    conn.close()
-    
-    return jsonify({'id': id, 'name': name, 'price': price, 'pack': pack})
+        
+        logger.info(f"Item updated successfully: id={id}, name={name}, price={price}, pack={pack}")
+        return jsonify({'id': id, 'name': name, 'price': price, 'pack': pack})
+    except Exception as e:
+        logger.error(f"Error updating item: {e}", exc_info=True)
+        return jsonify({'error': f'Gagal update item: {str(e)}'}), 500
 
 # DELETE item
 @app.route('/api/items/<int:id>', methods=['DELETE'])
